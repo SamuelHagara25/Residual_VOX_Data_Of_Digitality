@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+  <title>Sociologická mapa – Sociálne siete a informačný priestor</title>
+    <style>
+    html, body { height: 100%; }
+        body {
+      background: #0d1117;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+            margin: 0;
+      padding: 0;
+            text-align: center;
+    }
+    h1 { margin: 0 0 10px 0; font-size: 20px; font-weight: 650; }
+    p.sub { margin: 0 0 16px 0; color: #9ca3af; font-size: 13px; }
+    .wrap { width: 100%; max-width: none; margin: 0 auto; height: auto; display: flex; flex-direction: column; padding: 0; box-sizing: border-box; }
+
+    .board {
+              position: relative;
+      background: radial-gradient(900px 600px at 20% -10%, rgba(255,255,255,.05), rgba(255,255,255,0));
+      border: 1px solid #0b1220;
+            border-radius: 0;
+              overflow: hidden;
+      height: 100vh;
+    }
+    svg { width: 100%; height: 100%; display: block;
+      background-image: radial-gradient(#0f172a 1px, transparent 1px);
+      background-size: 18px 18px; background-position: -1px -1px; }
+
+    .ring { fill: none; stroke: #1f2937; stroke-dasharray: 4 6; stroke-opacity: .7; pointer-events: none; }
+    .ringLabel { fill: #94a3b8; font-size: 12px; letter-spacing: .2px; }
+
+    .link { fill: none; stroke: #334155; stroke-opacity: .5; stroke-linecap: round; stroke-linejoin: round; }
+    .link.highlight { stroke-opacity: .95; }
+    .link.dim { opacity: .12; }
+    .link.main { stroke: #60a5fa; }
+    .link.kom { stroke: #34d399; }
+    .link.dezi { stroke: #f87171; }
+
+    .node text { fill: #e2e8f0; font-size: 12px; }
+    .node circle { fill: #0b1220; stroke: #2a3a4f; stroke-width: 1.4px; filter: drop-shadow(0 1px 0 rgba(255,255,255,.03)) drop-shadow(0 4px 12px rgba(0,0,0,.35)); }
+    .node:hover circle { stroke: #7dd3fc; stroke-width: 1.8px; }
+    .node.dim { opacity: .35; }
+    .node.focus circle { stroke-width: 2.4px; stroke: #93c5fd; filter: drop-shadow(0 0 10px rgba(147,197,253,.28)) drop-shadow(0 6px 18px rgba(0,0,0,.45)); }
+
+    /* Pulsing halo for clickable topics */
+    .node .halo { fill: none; stroke: #93c5fd; stroke-width: 3px; opacity: 0; pointer-events: none; }
+    .haloPulse { animation: haloPulse 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    .node.dim .halo, .node.focus .halo { animation: none; opacity: 0 !important; }
+    @keyframes haloPulse {
+      0% { opacity: 0; transform: scale(0.9); }
+      40% { opacity: .35; }
+      100% { opacity: 0; transform: scale(1.5); }
+    }
+
+    .tip {
+      position: absolute; pointer-events: none;
+      background: #0b1220; color: #e5e7eb; border: 1px solid #1f2937;
+      padding: 8px 10px; border-radius: 10px; font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      opacity: 0; transform: translate(-50%, -120%);
+      max-width: 260px; text-align: left;
+    }
+
+    .legend { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+    .legend .item { display: flex; align-items: center; gap: 8px; color: #cbd5e1; font-size: 12px; }
+    .legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .legend.overlay { position: absolute; top: 10px; right: 10px; margin: 0; padding: 8px 10px; background: rgba(10,15,25,.65); border: 1px solid #0b1220; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02); }
+
+    .charts { width: 100%; max-width: 1400px; margin: 10px auto 12px auto; padding: 0 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)); border: 1px solid #0b1220; border-radius: 12px; padding: 10px; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.02); }
+    .card h2 { margin: 4px 6px 8px 6px; font-size: 14px; font-weight: 650; color: #e5e7eb; }
+    .card p { margin: 0 6px 8px 6px; color: #9ca3af; font-size: 12px; }
+    .chart { width: 100%; height: 240px; }
+
+    /* Controls overlay */
+    .ctl { position: absolute; top: 10px; left: 10px; z-index: 5; background: rgba(10,15,25,.65); border: 1px solid #0b1220; border-radius: 10px; padding: 8px 10px; color: #e5e7eb; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02); backdrop-filter: blur(6px); }
+    .ctl .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0; }
+    .ctl strong { font-size: 12px; color: #cbd5e1; }
+    .ctl label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cbd5e1; cursor: pointer; }
+    .ctl input[type="checkbox"] { accent-color: #60a5fa; }
+    .ctl button { padding: 6px 10px; border-radius: 8px; border: 1px solid #1f2937; background: #0b1220; color: #e5e7eb; cursor: pointer; font-size: 12px; }
+    .ctl button:hover { border-color: #34507a; }
+
+    /* Annotations */
+    .anno text { fill: #aebbd1; font-size: 11px; }
+    .anno line { stroke: #3b4a63; stroke-dasharray: 3 4; }
+
+    /* Hide top title to let map truly full-bleed */
+    .wrap > h1, .wrap > p.sub { display: none; }
+
+    @media (max-width: 768px){
+      .chart { height: 200px; }
+    }
+    @media (max-width: 768px){
+      h1 { font-size: 18px; }
+      p.sub { font-size: 12px; margin-bottom: 10px; }
+      .wrap { padding: 6px; }
+         }
+    </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Sociologická mapa: kruhový systém</h1>
+    <p class="sub">Koncentrické prstence: Ľudia → Motivácie → Platformy → Formáty → Akcie. Hrúbka a farba spojov reprezentuje silu toku a polaritu.</p>
+
+    <div class="legend overlay" id="legend"></div>
+
+    <div class="board">
+      <div class="ctl" id="controls">
+        <div class="row"><strong>Polarity</strong>
+          <label><input type="checkbox" id="pol-main" checked> Main</label>
+          <label><input type="checkbox" id="pol-kom" checked> Kom</label>
+          <label><input type="checkbox" id="pol-dezi" checked> Dezi</label>
+              </div>
+        <div class="row"><strong>Prstence</strong>
+          <label><input type="checkbox" data-ring="technologies" checked> Technológie</label>
+          <label><input type="checkbox" data-ring="affordances" checked> Vlastnosti</label>
+          <label><input type="checkbox" data-ring="actors" checked> Aktéri</label>
+          <label><input type="checkbox" data-ring="tactics" checked> Taktiky</label>
+          <label><input type="checkbox" data-ring="channels" checked> Kanály</label>
+          <label><input type="checkbox" data-ring="impacts" checked> Dopady</label>
+          </div>
+        <div class="row">
+          <button id="btn-reset">Reset</button>
+        </div>
+            </div>
+      <svg id="viz" viewBox="0 0 1100 700" preserveAspectRatio="xMidYMid meet" aria-label="Kruhový systém"></svg>
+      <div id="tip" class="tip"></div>
+            </div>
+
+        </div>
+
+  <script>
+    const RINGS = [
+      { id: 'technologies', label: 'Technológie', color: '#60a5fa' },
+      { id: 'affordances', label: 'Vlastnosti (affordances)', color: '#34d399' },
+      { id: 'actors', label: 'Aktéri', color: '#a78bfa' },
+      { id: 'tactics', label: 'Taktiky', color: '#f59e0b' },
+      { id: 'channels', label: 'Kanály', color: '#f87171' },
+      { id: 'impacts', label: 'Dopady', color: '#eab308' }
+    ];
+
+    const NODES = [
+      // Technológie
+      n('recommendationAI', 'technologies', 'Odporúčacie AI'),
+      n('shortVideo', 'technologies', 'Krátke video'),
+      n('livestreamInfra', 'technologies', 'Livestream infra'),
+      n('generativeAI', 'technologies', 'Generatívne AI'),
+      n('encryptedMessaging', 'technologies', 'Šifrované správy'),
+      n('microtargetAds', 'technologies', 'Mikro‑cielená reklama'),
+      n('automationAPIs', 'technologies', 'Automatizačné API'),
+
+      // Vlastnosti (affordances)
+      n('virality', 'affordances', 'Viralita'),
+      n('anonymity', 'affordances', 'Anonymita'),
+      n('lowFriction', 'affordances', 'Nízke trenie zdieľania'),
+      n('personalization', 'affordances', 'Personalizácia'),
+      n('opacity', 'affordances', 'Nepriehľadnosť algoritmov'),
+      n('scalableAutomation', 'affordances', 'Škálovateľná automatizácia'),
+      n('remixability', 'affordances', 'Remixovateľnosť'),
+
+      // Aktéri
+      n('stateOps', 'actors', 'Štátne/externé operácie'),
+      n('trollFarms', 'actors', 'Trollie farmy'),
+      n('altMedia', 'actors', 'Alternatívne médiá'),
+      n('influencers', 'actors', 'Influenceri'),
+      n('fringeCommunities', 'actors', 'Okrajové komunity'),
+      n('botnets', 'actors', 'Botnety'),
+
+      // Taktiky
+      n('memeWarfare', 'tactics', 'Meme warfare'),
+      n('outrageBait', 'tactics', 'Outrage bait'),
+      n('conspiracyFraming', 'tactics', 'Konšpiračné rámovanie'),
+      n('falseContext', 'tactics', 'Falošný kontext'),
+      n('deepfakes', 'tactics', 'Deepfakes'),
+      n('brigading', 'tactics', 'Brigádovanie'),
+      n('astroturf', 'tactics', 'Astroturfing'),
+
+      // Kanály
+      n('fbGroups', 'channels', 'Facebook skupiny'),
+      n('telegram', 'channels', 'Telegram kanály'),
+      n('youtube', 'channels', 'YouTube'),
+      n('tiktok', 'channels', 'TikTok'),
+      n('x', 'channels', 'Twitter/X'),
+      n('whatsapp', 'channels', 'WhatsApp/DM'),
+
+      // Dopady
+      n('polarization', 'impacts', 'Polarizácia'),
+      n('trustErosion', 'impacts', 'Erozia dôvery'),
+      n('realityBending', 'impacts', 'Ohýbanie reality'),
+      n('radicalization', 'impacts', 'Radikalizácia'),
+      n('offlineHarm', 'impacts', 'Offline škody')
+    ];
+
+    const LINKS = [
+      // Technológie -> Vlastnosti
+      l('recommendationAI','personalization', .9,'dezi'),
+      l('recommendationAI','opacity', .7,'dezi'),
+      l('shortVideo','virality', .85,'dezi'),
+      l('shortVideo','lowFriction', .7,'dezi'),
+      l('livestreamInfra','virality', .6,'dezi'),
+      l('generativeAI','remixability', .75,'dezi'),
+      l('generativeAI','anonymity', .45,'dezi'),
+      l('encryptedMessaging','anonymity', .75,'dezi'),
+      l('encryptedMessaging','lowFriction', .6,'dezi'),
+      l('microtargetAds','personalization', .7,'dezi'),
+      l('automationAPIs','scalableAutomation', .8,'dezi'),
+
+      // Vlastnosti -> Aktéri
+      l('virality','influencers', .7,'kom'),
+      l('virality','altMedia', .6,'dezi'),
+      l('anonymity','trollFarms', .7,'dezi'),
+      l('anonymity','stateOps', .45,'dezi'),
+      l('lowFriction','fringeCommunities', .7,'dezi'),
+      l('personalization','altMedia', .55,'dezi'),
+      l('opacity','stateOps', .6,'dezi'),
+      l('scalableAutomation','botnets', .85,'dezi'),
+      l('remixability','influencers', .6,'kom'),
+
+      // Aktéri -> Taktiky
+      l('trollFarms','brigading', .8,'dezi'),
+      l('trollFarms','astroturf', .7,'dezi'),
+      l('altMedia','conspiracyFraming', .8,'dezi'),
+      l('altMedia','falseContext', .7,'dezi'),
+      l('influencers','memeWarfare', .75,'kom'),
+      l('influencers','outrageBait', .65,'kom'),
+      l('stateOps','deepfakes', .6,'dezi'),
+      l('botnets','brigading', .75,'dezi'),
+
+      // Taktiky -> Kanály
+      l('memeWarfare','tiktok', .8,'dezi'),
+      l('memeWarfare','x', .6,'dezi'),
+      l('outrageBait','facebook', .65,'dezi'),
+      l('conspiracyFraming','youtube', .7,'dezi'),
+      l('falseContext','facebook', .6,'dezi'),
+      l('deepfakes','youtube', .6,'dezi'),
+      l('brigading','x', .7,'dezi'),
+      l('astroturf','fbGroups', .65,'dezi'),
+      l('astroturf','telegram', .6,'dezi'),
+
+      // Kanály -> Dopady
+      l('fbGroups','realityBending', .7,'dezi'),
+      l('telegram','radicalization', .65,'dezi'),
+      l('youtube','trustErosion', .55,'dezi'),
+      l('tiktok','polarization', .6,'dezi'),
+      l('x','polarization', .6,'dezi'),
+      l('whatsapp','offlineHarm', .45,'dezi')
+    ];
+
+    function n(id, ring, label){ return { id, ring, label }; }
+    function l(s, t, w, pol){ return { source: s, target: t, weight: w, polarity: pol }; }
+
+    const svg = document.getElementById('viz');
+    const tip = document.getElementById('tip');
+
+    let width = 1100, height = 700;
+    let center = { x: 550, y: 350 };
+    let baseR = 90; let gapR = 85;
+    let stretchX = 1.0, stretchY = 1.0;
+
+    let nodesByRing = RINGS.map(r => ({ ring: r.id, items: NODES.filter(n => n.ring === r.id) }));
+    const pos = {};
+    const state = { pol: new Set(['main','kom','dezi']), rings: new Set(RINGS.map(r=>r.id)), focus: null, showAnno: false, routeStyle: 'metro' };
+    const degreeById = {};
+    const radiusFactorById = {};
+    const orderByRing = {};
+
+    function computeSize(){
+      // veľkosť podľa skutočného kontajnera
+      const bb = svg.parentElement.getBoundingClientRect();
+      width = Math.max(320, Math.floor(bb.width));
+      height = Math.max(320, Math.floor(bb.height));
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      center = { x: width/2, y: height/2 };
+      const maxR = Math.min(width, height) / 2 - 70; // rezerva na štítky
+      gapR = maxR / RINGS.length;
+      baseR = gapR; // prvý prstenec
+      const ratio = width / height;
+      stretchX = Math.min(1.6, Math.max(1.15, ratio));
+      stretchY = 1 / Math.pow(stretchX, 0.5);
+    }
+
+    function layout(useOrder){
+      nodesByRing.forEach((group, idx) => {
+        const r = baseR + idx * gapR;
+        let items = group.items.slice();
+        if(useOrder && orderByRing[group.ring]){
+          const order = orderByRing[group.ring];
+          const index = Object.fromEntries(order.map((id,i)=>[id,i]));
+          items.sort((a,b)=> (index[a.id]??0) - (index[b.id]??0));
+        }
+        items.forEach((node, i) => {
+          const ang = (i / items.length) * Math.PI * 2 - Math.PI / 2;
+          const x = center.x + Math.cos(ang) * r * stretchX;
+          const y = center.y + Math.sin(ang) * r * stretchY;
+          pos[node.id] = { x, y, r, ang, ringIndex: idx };
+        });
+      });
+    }
+
+    function computeHierarchyAndOrder(){
+      // degree (weighted)
+      NODES.forEach(n=> degreeById[n.id]=0);
+      LINKS.forEach(L=>{
+        degreeById[L.source] = (degreeById[L.source]||0) + (L.weight||1);
+        degreeById[L.target] = (degreeById[L.target]||0) + (L.weight||1);
+      });
+      const vals = Object.values(degreeById);
+      const dMin = Math.min(...vals, 0);
+      const dMax = Math.max(...vals, 1);
+      NODES.forEach(n=>{
+        const d = degreeById[n.id]||0;
+        const t = dMax===dMin ? 0.5 : (d - dMin) / (dMax - dMin);
+        radiusFactorById[n.id] = 0.9 + t*0.9; // 0.9 .. 1.8
+      });
+
+      // preferred angles from neighbors
+      RINGS.forEach(r=>{
+        const group = nodesByRing.find(g=>g.ring===r.id);
+        if(!group) return;
+        const hints = group.items.map(n=>{
+          const neighbors = new Set();
+          LINKS.forEach(L=>{
+            if(L.source===n.id) neighbors.add(L.target);
+            else if(L.target===n.id) neighbors.add(L.source);
+          });
+          if(neighbors.size===0) return { id:n.id, ang: (pos[n.id]?.ang)??0 };
+          let sx=0, sy=0;
+          neighbors.forEach(id=>{
+            const p = pos[id]; if(!p) return;
+            const ang = Math.atan2(p.y - center.y, p.x - center.x);
+            sx += Math.cos(ang); sy += Math.sin(ang);
+          });
+          const ang = Math.atan2(sy, sx);
+          return { id:n.id, ang };
+        });
+        hints.sort((a,b)=> a.ang - b.ang);
+        orderByRing[r.id] = hints.map(h=>h.id);
+      });
+    }
+
+    function drawRings(){
+      RINGS.forEach((r, idx) => {
+        if(!state.rings.has(r.id)) return;
+        const g = el('g');
+        const rx = (baseR + idx * gapR) * stretchX;
+        const ry = (baseR + idx * gapR) * stretchY;
+        const ellipse = el('ellipse', { cx: center.x, cy: center.y, rx: rx, ry: ry, class: 'ring' });
+        const label = el('text', { x: center.x, y: center.y - ry - 8, class: 'ringLabel', 'text-anchor':'middle' });
+        label.textContent = r.label;
+        g.appendChild(ellipse); g.appendChild(label); svg.appendChild(g);
+      });
+    }
+
+    function drawLinks(){
+      const g = el('g'); svg.appendChild(g);
+      LINKS.forEach((L, idx) => {
+        if(!state.pol.has(L.polarity)) return;
+        const a = pos[L.source], b = pos[L.target]; if(!a || !b) return;
+        // gradient id
+        const gid = `grad-${idx}`;
+        const defs = ensureDefs();
+        const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+        grad.setAttribute('id', gid);
+        grad.setAttribute('x1','0%'); grad.setAttribute('y1','0%'); grad.setAttribute('x2','100%'); grad.setAttribute('y2','0%');
+        const cStart = ringColor(nodesByRing[pos[L.source].ringIndex].ring);
+        const cEnd   = ringColor(nodesByRing[pos[L.target].ringIndex].ring);
+        const s1 = el('stop',{'offset':'0%','stop-color':cStart,'stop-opacity':0.9});
+        const s2 = el('stop',{'offset':'100%','stop-color':cEnd,'stop-opacity':0.9});
+        grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad);
+        // Metro routing (radial -> arc -> radial)
+        const rA = Math.hypot(a.x - center.x, a.y - center.y);
+        const rB = Math.hypot(b.x - center.x, b.y - center.y);
+        const rMid = (rA + rB) / 2;
+        const midA = radialScalePoint(a, rMid);
+        const midB = radialScalePoint(b, rMid);
+        const angA = Math.atan2(a.y - center.y, a.x - center.x);
+        const angB = Math.atan2(b.y - center.y, b.x - center.x);
+        let dAng = angB - angA; while(dAng <= -Math.PI) dAng += Math.PI*2; while(dAng > Math.PI) dAng -= Math.PI*2;
+        const largeArc = Math.abs(dAng) > Math.PI ? 1 : 0;
+        const sweep = dAng >= 0 ? 1 : 0;
+        const rx = rMid; // we use viewBox units; ellipse rx/ry will be scaled below with stretch factors using transform on arc radii
+        const ry = rMid;
+        const d = `M ${a.x} ${a.y} L ${midA.x} ${midA.y} A ${rx} ${ry} 0 ${largeArc} ${sweep} ${midB.x} ${midB.y} L ${b.x} ${b.y}`;
+        const p = el('path', { d, class: 'link '+L.polarity, 'stroke-width': 0.8 + L.weight * 2.8, 'stroke-opacity': 0.22 + L.weight * 0.5, stroke:`url(#${gid})` });
+        p.addEventListener('mousemove', (e)=> showTip(e, linkTip(L)));
+        p.addEventListener('mouseleave', hideTip);
+        g.appendChild(p);
+      });
+    }
+
+    function radialScalePoint(pt, targetRadius){
+      const vx = pt.x - center.x, vy = pt.y - center.y;
+      const len = Math.hypot(vx, vy) || 1;
+      const k = targetRadius / len;
+      return { x: center.x + vx * k, y: center.y + vy * k };
+    }
+
+    function ensureDefs(){
+      let defs = svg.querySelector('defs');
+      if(!defs){ defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); svg.appendChild(defs); }
+      return defs;
+    }
+
+    function drawNodes(){
+      const g = el('g'); svg.appendChild(g);
+      const s = Math.min(width, height) / 900; // škálovanie podľa veľkosti
+      const baseDot = Math.max(4, Math.min(8, Math.round(6*s)));
+      const baseFont = Math.max(10, Math.min(13, Math.round(12*s)));
+      NODES.forEach(n => {
+        if(!state.rings.has(n.ring)) return;
+        const p = pos[n.id];
+        const node = el('g', { class: 'node', transform: `translate(${p.x},${p.y})` });
+        const factor = radiusFactorById[n.id] || 1;
+        // dot radius (small knot), scaled by hierarchy but clamped
+        const desiredR = Math.max(3, Math.min(12, Math.round(baseDot * (0.9 + 0.6*(factor-1)))));
+        const radius = Math.max(3, Math.min(desiredR, Math.max(3, (gapR - 16) * 0.25)));
+        const halo = el('circle', { cx: 0, cy: 0, r: Math.round(radius*1.2), class: 'halo haloPulse' });
+        const circ = el('circle', { cx: 0, cy: 0, r: radius });
+        circ.setAttribute('stroke', ringColor(n.ring));
+        const label = el('text', { 'text-anchor':'middle' });
+        const fontSize = Math.max(9, Math.min(14, Math.round(baseFont * (0.95 + 0.15*(factor-1)))));
+        label.setAttribute('font-size', fontSize);
+        // wrap label under the dot
+        const maxLabelWidth = Math.min(160, Math.max(80, Math.round(gapR * 1.4)));
+        wrapLabel(label, n.label, maxLabelWidth, fontSize);
+        // position first line just below the dot
+        const lineH = Math.round(fontSize * 1.1);
+        label.setAttribute('y', String(radius + lineH));
+        node.appendChild(halo); node.appendChild(circ); node.appendChild(label);
+        node.addEventListener('mousemove', (e)=> showTip(e, '<b>'+esc(n.label)+'</b><br><small>'+esc(ringLabel(n.ring))+'</small>'));
+        node.addEventListener('mouseleave', hideTip);
+        node.addEventListener('click', ()=> { state.focus = n.id; focusNode(n.id); });
+        g.appendChild(node);
+      });
+      if(state.showAnno) drawAnnotations();
+    }
+
+    function wrapLabel(textEl, str, maxWidth, fontSize){
+      // build lines first, then render tspans once to avoid duplicates
+      while(textEl.firstChild) textEl.removeChild(textEl.firstChild);
+      const words = (str||'').split(/\s+/).filter(Boolean);
+      if(words.length===0){ return; }
+      const lineH = Math.round(fontSize*1.1);
+      const lines = [];
+      let current = '';
+      for(let i=0;i<words.length;i++){
+        const w = words[i];
+        const test = current ? current + ' ' + w : w;
+        if(measureSvgText(test, fontSize) <= maxWidth){
+          current = test;
+                   } else {
+          if(current){ lines.push(current); current = w; }
+          else { // single very long word: hard cut
+            lines.push(w);
+            current = '';
+          }
+        }
+      }
+      if(current) lines.push(current);
+      // limit to 3 lines max; add ellipsis if truncated
+      const maxLines = 3;
+      const finalLines = lines.slice(0, maxLines);
+      if(lines.length > maxLines){
+        const last = finalLines[finalLines.length-1];
+        let ell = last + '…';
+        while(measureSvgText(ell, fontSize) > maxWidth && ell.length>1){ ell = ell.slice(0, -2) + '…'; }
+        finalLines[finalLines.length-1] = ell;
+      }
+      finalLines.forEach((ln, idx)=>{
+        const tspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
+        tspan.setAttribute('x','0');
+        tspan.setAttribute('dy', String(idx===0 ? 0 : lineH));
+        tspan.textContent = ln;
+        textEl.appendChild(tspan);
+      });
+    }
+
+    function measureSvgText(s, fontSize){
+      const probe = document.createElementNS('http://www.w3.org/2000/svg','text');
+      probe.setAttribute('visibility','hidden');
+      probe.setAttribute('font-size', String(fontSize));
+      probe.textContent = s;
+      svg.appendChild(probe);
+      const w = probe.getComputedTextLength();
+      svg.removeChild(probe);
+      return w;
+    }
+
+    function focusNode(id){
+      const adj = new Set([id]);
+      LINKS.forEach(L=>{ if(L.source===id) adj.add(L.target); if(L.target===id) adj.add(L.source); });
+      // dim others
+      svg.querySelectorAll('.node').forEach(n=>{
+        const label = n.querySelector('text')?.textContent || '';
+        const nodeObj = NODES.find(x=>x.label===label);
+        if(!nodeObj) return;
+        if(adj.has(nodeObj.id)) n.classList.remove('dim'); else n.classList.add('dim');
+        if(nodeObj.id===id){ n.classList.add('focus'); } else { n.classList.remove('focus'); }
+      });
+      svg.querySelectorAll('.link').forEach(p=>{
+        p.classList.add('dim');
+      });
+      // highlight adjacent links
+      const paths = Array.from(svg.querySelectorAll('.link'));
+      paths.forEach((p,i)=>{
+        const L = LINKS[i];
+        if(L.source===id || L.target===id) p.classList.remove('dim');
+      });
+    }
+
+    function drawAnnotations(){
+      const g = el('g', { class: 'anno' }); svg.appendChild(g);
+      // príklady anotácií
+      const anchor = pos['tiktok']; if(anchor){
+        const x1=anchor.x, y1=anchor.y-18, x2=x1+80, y2=y1-50;
+        g.appendChild(el('line',{x1,y1,x2,y2}));
+        const t = el('text',{'x':x2+4,'y':y2-6}); t.textContent='Silný rast krátkeho videa'; g.appendChild(t);
+      }
+      const a2 = pos['facebook']; if(a2){
+        const x1=a2.x, y1=a2.y+18, x2=x1-100, y2=y1+50;
+        g.appendChild(el('line',{x1,y1,x2,y2}));
+        const t = el('text',{'x':x2-4,'y':y2+12,'text-anchor':'end'}); t.textContent='Komunity a skupiny'; g.appendChild(t);
+      }
+    }
+
+    function ringColor(id){ const r = RINGS.find(x=>x.id===id); return r ? r.color : '#94a3b8'; }
+    function ringLabel(id){ const r = RINGS.find(x=>x.id===id); return r ? r.label : id; }
+
+    function el(t, attrs={}){
+      const ns = 'http://www.w3.org/2000/svg'; const e = document.createElementNS(ns, t);
+      Object.entries(attrs).forEach(([k,v])=> e.setAttribute(k,v)); return e;
+    }
+
+    function showTip(e, html){
+      tip.innerHTML = html; tip.style.opacity = 1;
+      const bb = svg.getBoundingClientRect();
+      const x = (e.clientX - bb.left), y = (e.clientY - bb.top);
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    }
+    function hideTip(){ tip.style.opacity = 0; }
+    function esc(s){ return s.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function linkTip(L){
+      const s = NODES.find(x=>x.id===L.source).label;
+      const t = NODES.find(x=>x.id===L.target).label;
+      const pol = L.polarity==='main'?'Mainstream':(L.polarity==='kom'?'Komunitné':'Dezinformácie');
+      return '<b>'+esc(s)+'</b> → <b>'+esc(t)+'</b><br>'+
+             'Sila toku: '+Math.round(L.weight*100)+'% · '+pol;
+    }
+
+    function render(){
+      computeSize();
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+      // prelayout to compute neighbor angles
+      layout(false);
+      computeHierarchyAndOrder();
+      // final layout ordered by hints
+      layout(true);
+      drawRings();
+      drawLinks();
+      drawNodes();
+    }
+
+    // Legenda
+    const legend = document.getElementById('legend');
+    const polLegend = [
+      {c:'#60a5fa',t:'Technológie',k:'tech'},
+      {c:'#34d399',t:'Vlastnosti',k:'aff'},
+      {c:'#a78bfa',t:'Aktéri',k:'act'},
+      {c:'#f59e0b',t:'Taktiky',k:'tac'},
+      {c:'#f87171',t:'Kanály',k:'cha'},
+      {c:'#eab308',t:'Dopady',k:'imp'}
+    ];
+    RINGS.forEach(r=> addLegend(r.color, r.label));
+    function addLegend(color, text){
+      const el = document.createElement('div'); el.className = 'item';
+      el.innerHTML = '<span class="dot" style="background:'+color+'"></span><span>'+text+'</span>';
+      legend.appendChild(el);
+    }
+
+    render();
+    window.addEventListener('resize', ()=>{ render(); if(state.focus) focusNode(state.focus); drawCharts(); });
+
+    // Controls wiring
+    (function initControls(){
+      const q = s=> document.querySelector(s);
+      q('#pol-main').addEventListener('change', e=>{ togglePol('main', e.target.checked); });
+      q('#pol-kom').addEventListener('change', e=>{ togglePol('kom', e.target.checked); });
+      q('#pol-dezi').addEventListener('change', e=>{ togglePol('dezi', e.target.checked); });
+      document.querySelectorAll('[data-ring]').forEach(cb=>{
+        cb.addEventListener('change', e=>{ toggleRing(e.target.getAttribute('data-ring'), e.target.checked); });
+      });
+      // removed scientific annotations toggle
+      q('#btn-reset').addEventListener('click', ()=>{ state.pol = new Set(['main','kom','dezi']); state.rings = new Set(RINGS.map(r=>r.id)); state.focus=null; state.showAnno=false; syncControls(); render(); });
+      function togglePol(k,on){ on? state.pol.add(k): state.pol.delete(k); render(); if(state.focus) focusNode(state.focus); }
+      function toggleRing(k,on){ on? state.rings.add(k): state.rings.delete(k); render(); if(state.focus) focusNode(state.focus); }
+      function syncControls(){
+        q('#pol-main').checked = state.pol.has('main');
+        q('#pol-kom').checked  = state.pol.has('kom');
+        q('#pol-dezi').checked = state.pol.has('dezi');
+        document.querySelectorAll('[data-ring]').forEach(cb=>{ cb.checked = state.rings.has(cb.getAttribute('data-ring')); });
+        // no anno toggle in UI
+      }
+    })();
+
+    // charts removed
+     </script>
+</body>
+</html>
