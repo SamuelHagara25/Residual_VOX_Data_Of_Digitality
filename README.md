@@ -1,0 +1,1 @@
+# Residual_VOX_Data_Of_Digitality
